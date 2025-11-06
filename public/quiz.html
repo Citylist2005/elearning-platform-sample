@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head>
+  <meta charset="utf-8">
+  <title>Quiz</title>
+  <link rel="stylesheet" href="/styles.css">
+</head><body>
+  <h2>Quiz</h2>
+  <form id="quizForm"></form>
+  <div id="result"></div>
+  <a href="/courses.html">Back to Courses</a>
+  <script>
+    async function load(){
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      if (!id) { document.getElementById('result').textContent = 'No course id'; return;}
+      const res = await fetch('/api/courses/' + encodeURIComponent(id));
+      if (!res.ok) { document.getElementById('result').textContent = 'Course not found'; return;}
+      const course = await res.json();
+      const form = document.getElementById('quizForm');
+      course.quiz.questions.forEach((q,i) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'quiz-question';
+        qDiv.innerHTML = `<p>${i+1}. ${q.q}</p>` + q.choices.map((c,ci) =>
+          `<label><input type="radio" name="q${i}" value="${ci}"> ${c}</label><br>`
+        ).join('');
+        form.appendChild(qDiv);
+      });
+      const submit = document.createElement('button');
+      submit.type='button'; submit.textContent='Submit Quiz';
+      submit.addEventListener('click', async ()=>{
+        const answers = [];
+        for (let i=0;i<course.quiz.questions.length;i++){
+          const checked = form.querySelector('input[name="q'+i+'"]:checked');
+          if (!checked){ document.getElementById('result').textContent = 'Please answer all questions'; return; }
+          answers.push(Number(checked.value));
+        }
+        const r = await fetch('/api/courses/' + encodeURIComponent(id) + '/quiz/submit', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ answers })
+        });
+        const j = await r.json();
+        if (!r.ok) { document.getElementById('result').textContent = j.error; return; }
+        document.getElementById('result').textContent = `Score: ${j.score}/${j.total}`;
+      });
+      form.appendChild(submit);
+    }
+    load();
+  </script>
+</body></html>

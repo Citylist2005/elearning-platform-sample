@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head>
+  <meta charset="utf-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="/styles.css">
+</head><body>
+  <h2>Register</h2>
+  <form id="registerForm">
+    <label>Username <input name="username" required></label><br>
+    <label>Email <input name="email" type="email" required></label><br>
+    <label>Password <input name="password" type="password" minlength="6" required></label><br>
+    <button type="submit">Register</button>
+  </form>
+  <p id="msg"></p>
+  <a href="/">Home</a>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const f = e.target;
+      const data = { username: f.username.value, email: f.email.value, password: f.password.value };
+      const res = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      const json = await res.json();
+      document.getElementById('msg').textContent = json.error || json.message;
+      if (res.ok) setTimeout(()=> location.href = '/courses.html', 700);
+    });
+  </script>
+</body></html>
